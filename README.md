@@ -11,15 +11,15 @@ Este módulo **NO crea alarmas**, únicamente actúa sobre alarmas existentes.
 
 ```hcl
 module "cloudwatch_alarms_silence" {
-  source = "github.com/Andres-0903/cloudwatch-alarms-scheduler?ref=1.0.1"
+  source = "github.com/Andres-0903/cloudwatch-alarms-scheduler?ref=1.0.2"
 
   alarm_names = [
     "monitoreo-EC2-CPUUtilization-Apache-dev",
     "monitoreo-EC2-MemoryUtilization-Apache-dev"
   ]
 
-  mute_cron   = "cron(0 23 * * ? *)" # 11:00 PM
-  unmute_cron = "cron(0 6 * * ? *)"  # 06:00 AM
+  mute_cron   = List(string) example "cron(0 23 * * ? *)" # 11:00 PM 
+  unmute_cron = List(string) example "cron(0 6 * * ? *)"  # 06:00 AM 
 }
 ```
 
