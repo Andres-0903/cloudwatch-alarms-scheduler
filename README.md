@@ -11,7 +11,7 @@ Este módulo **NO crea alarmas**, únicamente actúa sobre alarmas existentes.
 
 ```hcl
 module "cloudwatch_alarms_silence" {
-  source = "github.com/Andres-0903/cloudwatch-alarms-scheduler?ref=feature/monitoring"
+  source = "github.com/Andres-0903/cloudwatch-alarms-scheduler?ref=1.0.1"
 
   alarm_names = [
     "monitoreo-EC2-CPUUtilization-Apache-dev",
