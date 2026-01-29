@@ -12,6 +12,11 @@ variable "alarm_names" {
 variable "mute_cron" {
   description = "Cron expression to mute CloudWatch alarms"
   type        = string
+
+  validation {
+    condition     = length(var.mute_cron) > 0
+    error_message = "mute_cron cannot be empty"
+  }
 }
 
 variable "unmute_cron" {
@@ -19,10 +24,3 @@ variable "unmute_cron" {
   type        = string
 }
 
-variable "mute_cron" {
-  type = string
-  validation {
-    condition     = length(var.mute_cron) > 0
-    error_message = "mute_cron cannot be empty"
-  }
-}
