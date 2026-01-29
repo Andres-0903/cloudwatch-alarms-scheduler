@@ -37,11 +37,15 @@ resource "aws_ssm_document" "unmute_alarms" {
 resource "aws_cloudwatch_event_target" "mute_target" {
   rule     = aws_cloudwatch_event_rule.mute.name
   arn      = aws_ssm_document.mute_alarms.arn
-  role_arn = aws_iam_role.eventbridge_ssm_role.arn
+  role_arn = aws_iam_role.eventbridge_role_assume.arn
+
+  depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
 }
 
 resource "aws_cloudwatch_event_target" "unmute_target" {
   rule     = aws_cloudwatch_event_rule.unmute.name
   arn      = aws_ssm_document.unmute_alarms.arn
-  role_arn = aws_iam_role.eventbridge_ssm_role.arn
+  role_arn = aws_iam_role.eventbridge_role_assume.arn
+
+  depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
 }
