@@ -26,3 +26,18 @@ variable "account_id" {
   type        = string
 }
 
+####Variables para las alarmas
+variable "alarm_names" {
+  type        = list(string)
+  description = "Alarmas a mutear"
+}
+
+variable "mute_cron" {
+  type = string
+}
+
+variable "unmute_cron" {
+  type = string
+}
+
+
