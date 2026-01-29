@@ -1,27 +1,9 @@
-###------Regla para deshabilitar alarmas------###
-resource "aws_cloudwatch_event_rule" "disable_alarms_rule" {
-  name                = "{var.name_prefix}-disable-alarms-rule"
-  description         = "Rule to disable CloudWatch Alarms during silence period"
-  schedule_expression = var.disable_cron
-}
-
-resource "aws_cloudwatch_event_target" "disable_target" {
-  rule      = aws_cloudwatch_event_rule.disable_alarms_rule.name
-  target_id = "EnableAlarm_Actions"
-  arn       = "arn:aws:cloudwatch:${var.region}:${var.account_id}:alarm:*"
-  role_arn  = aws_iam_role.eventbirdge_role.arn
-  input     = "{}"
-
-}
-
-###-----SSM Parameter to hold alarm names to mute-----###
 resource "aws_ssm_document" "mute_alarms" {
   name          = "mute-cloudwatch-alarms"
   document_type = "Automation"
 
   content = jsonencode({
     schemaVersion = "0.3"
-    description   = "Mute CloudWatch alarms"
     mainSteps = [{
       name   = "DisableAlarms"
       action = "aws:executeAwsApi"
@@ -33,16 +15,15 @@ resource "aws_ssm_document" "mute_alarms" {
     }]
   })
 }
-###------Regla para habilitar alarmas------###
+
 resource "aws_ssm_document" "unmute_alarms" {
-  name          = "mute-cloudwatch-alarms"
+  name          = "unmute-cloudwatch-alarms"
   document_type = "Automation"
 
   content = jsonencode({
     schemaVersion = "0.3"
-    description   = "Mute CloudWatch alarms"
     mainSteps = [{
-      name   = "EnableAlarmActions"
+      name   = "EnableAlarms"
       action = "aws:executeAwsApi"
       inputs = {
         Service    = "CloudWatch"
@@ -53,7 +34,6 @@ resource "aws_ssm_document" "unmute_alarms" {
   })
 }
 
-##Targets SSM para mutear y desmutear alarmas##
 resource "aws_cloudwatch_event_target" "mute_target" {
   rule     = aws_cloudwatch_event_rule.mute.name
   arn      = aws_ssm_document.mute_alarms.arn

@@ -1,7 +1,9 @@
-output "disable_rule_arn" {
-  value = aws_cloudwatch_event_rule.disable_alarms_rule.arn
+output "mute_rule_name" {
+  description = "Nombre de la regla EventBridge para mutear alarmas"
+  value       = aws_cloudwatch_event_rule.mute.name
 }
 
-output "enable_rule_arn" {
-  value = aws_cloudwatch_event_rule.enable_alarms_rule.arn
+output "unmute_rule_name" {
+  description = "Nombre de la regla EventBridge para desmutear alarmas"
+  value       = aws_cloudwatch_event_rule.unmute.name
 }
