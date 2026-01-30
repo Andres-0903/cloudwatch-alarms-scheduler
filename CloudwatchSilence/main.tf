@@ -4,6 +4,8 @@ resource "aws_ssm_document" "mute_alarms" {
 
   content = jsonencode({
     schemaVersion = "0.3"
+    assumeRole    = aws_iam_role.ssm_automation_role.arn
+
     mainSteps = [{
       name   = "DisableAlarms"
       action = "aws:executeAwsApi"
@@ -16,12 +18,15 @@ resource "aws_ssm_document" "mute_alarms" {
   })
 }
 
+
 resource "aws_ssm_document" "unmute_alarms" {
   name          = "unmute-cloudwatch-alarms"
   document_type = "Automation"
 
   content = jsonencode({
     schemaVersion = "0.3"
+    assumeRole    = aws_iam_role.ssm_automation_role.arn
+
     mainSteps = [{
       name   = "EnableAlarms"
       action = "aws:executeAwsApi"
@@ -34,7 +39,7 @@ resource "aws_ssm_document" "unmute_alarms" {
   })
 }
 
-resource "aws_iam_role_ssm_" "ssm_automation_role" {
+resource "aws_iam_role" "ssm_automation_role" {
   name        = "${var.name_prefix}-ssm-automation-role"
   description = "IAM Role for SSM Automation to mute/unmute CloudWatch Alarms"
 
@@ -51,7 +56,7 @@ resource "aws_iam_role_ssm_" "ssm_automation_role" {
 
 }
 
-resource "aws_iam_policy_ssm" "ssm_automation_policy" {
+resource "aws_iam_policy" "ssm_automation_policy" {
   name        = "${var.name_prefix}-ssm-automation-role-policy"
   description = "Policy for SSM Automation to mute/unmute CloudWatch Alarms"
 
@@ -77,9 +82,6 @@ resource "aws_cloudwatch_event_target" "mute_target" {
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
 
-  input = jsonencode({
-    AutomationAssumeRole = aws_iam_role.ssm_automation_role.arn
-  })
 }
 
 resource "aws_cloudwatch_event_target" "unmute_target" {
@@ -88,8 +90,9 @@ resource "aws_cloudwatch_event_target" "unmute_target" {
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
+}
 
-  input = jsonencode({
-    AutomationAssumeRole = aws_iam_role.ssm_automation_role.arn
-  })
+resource "aws_iam_role_policy_attachment" "ssm_automation_role_attachment" {
+  role       = aws_iam_role.ssm_automation_role.name
+  policy_arn = aws_iam_policy.ssm_automation_policy.arn
 }
