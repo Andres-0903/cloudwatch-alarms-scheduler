@@ -1,82 +1,64 @@
-# cloudwatch-alarms-scheduler
+# CloudWatch Alarms Scheduler
 
-Módulo **Terraform** para programar el *muteo (silence)* y *desmuteo* automático de acciones de alarmas de **Amazon CloudWatch**
-usando **EventBridge** y **AWS Systems Manager (SSM)**, **sin necesidad de Lambda**.
+Módulo de Terraform para **silenciar** (_mute_) y **reactivar** (_unmute_) acciones de **Amazon CloudWatch Alarms** de forma **programada** mediante **Amazon EventBridge** y **AWS Systems Manager Automation** (sin Lambda).
 
-Este módulo **NO crea alarmas**, únicamente actúa sobre alarmas existentes.
+## Objetivo
 
----
+- Deshabilitar acciones de alarmas durante ventanas de mantenimiento.
+- Reactivar automáticamente al finalizar la ventana.
+- Mantener un enfoque serverless con mínimo privilegio IAM.
 
-## 📌 Uso
+## Diagrama
 
-```hcl
-module "cloudwatch_alarms_silence" {
-  source = "github.com/Andres-0903/cloudwatch-alarms-scheduler//CloudwatchSilence?ref=1.0.3"
+![Proceso](diagram.png)
 
-  alarm_names = [
-    "monitoreo-EC2-CPUUtilization-Apache-dev",
-    "monitoreo-EC2-MemoryUtilization-Apache-dev"
-  ]
-
-  mute_cron   = List(string) example "cron(0 23 * * ? *)" # 11:00 PM 
-  unmute_cron = List(string) example "cron(0 6 * * ? *)"  # 06:00 AM 
-}
-```
-
----
-
-## 🔧 Variables
-
-| Nombre        | Tipo          | Descripción |
-|--------------|---------------|-------------|
-| `alarm_names` | `list(string)` | Lista de nombres de alarmas de CloudWatch |
-| `mute_cron`   | `string`       | Expresión cron para mutear alarmas |
-| `unmute_cron` | `string`       | Expresión cron para desmutear alarmas |
-
----
-
-## 📤 Outputs (opcional)
-
-Puedes exponer los ARNs de las reglas de EventBridge si lo deseas:
+## Variables
 
 ```hcl
-output "mute_rule_arn" {
-  value = aws_cloudwatch_event_rule.mute.arn
+variable "name_prefix" { type = string }
+variable "alarm_names"  { type = list(string) }
+variable "mute_cron"    { type = string }
+variable "unmute_cron"  { type = string }
+```
+
+> **Notas**
+>
+> - Las expresiones `cron()` de EventBridge se evalúan en **UTC**.
+> - Las APIs `DisableAlarmActions`/`EnableAlarmActions` aceptan **hasta 100** nombres por invocación; si tienes más, divide en lotes.
+
+## Ejemplo de uso
+
+```hcl
+module "cloudwatch_alarms_scheduler" {
+  source = "./cloudwatch-alarms-scheduler"
+
+  name_prefix = "myapp"
+  alarm_names = ["high-cpu-alarm", "http-5xx-errors", "latency-p99"]
+
+  # 00:00→01:00 UTC
+  mute_cron   = "cron(0 0 * * ? *)"
+  unmute_cron = "cron(0 1 * * ? *)"
 }
-
-output "unmute_rule_arn" {
-  value = aws_cloudwatch_event_rule.unmute.arn
-}
 ```
 
----
+## Salidas
 
-## ⚙️ Requisitos
+- `mute_rule_name`, `unmute_rule_name`
+- `eventbridge_role_arn`, `ssm_automation_role_arn`
+- `alarm_arns`
 
-- Terraform >= 1.0
-- AWS Provider >= 5.x
-- Permisos IAM para:
-  - `cloudwatch:DisableAlarmActions`
-  - `cloudwatch:EnableAlarmActions`
-  - `ssm:StartAutomationExecution`
+## Cómo funciona
 
----
+1. Dos **reglas de EventBridge** (mute/unmute) con cron en UTC.
+2. Cada regla invoca un **SSM Automation Document** que llama a `DisableAlarmActions` o `EnableAlarmActions`.
+3. **CloudWatch** aplica los cambios en las alarmas especificadas.
 
-## 📝 Notas
+## Seguridad
 
-- Diseñado para ambientes **dev / qa / prod**
-- Escala sin problema a **cientos de alarmas**
-- Ideal para integrarse con **pipelines Jenkins**
-- Compatible con cuentas **AWS Free Tier**
+- IAM con alcance a los **ARNs** de las alarmas objetivo.
+- Sin runtimes administrados: menor superficie operativa.
 
----
+## Roadmap
 
-## 🧠 Arquitectura
-
-```
-EventBridge (cron)
-        ↓
-SSM Automation
-        ↓
-CloudWatch (Enable / Disable Alarm Actions)
-```
+- Opción con **EventBridge Scheduler** y `schedule_timezone`.
+- Soporte de auto-chunking para >100 alarmas.
