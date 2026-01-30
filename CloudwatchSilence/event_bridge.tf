@@ -1,3 +1,7 @@
+############################################
+# EventBridge rules + IAM para SSM Automation
+############################################
+
 resource "aws_cloudwatch_event_rule" "mute" {
   description         = "Rule to mute CloudWatch alarms on schedule"
   name                = "${var.name_prefix}-mute"
@@ -10,6 +14,7 @@ resource "aws_cloudwatch_event_rule" "unmute" {
   schedule_expression = var.unmute_cron
 }
 
+# Rol que EventBridge asume para invocar SSM Automation
 resource "aws_iam_role" "eventbridge_role_assume" {
   name = "${var.name_prefix}-eventbridge-role"
 
@@ -23,9 +28,9 @@ resource "aws_iam_role" "eventbridge_role_assume" {
       Action = "sts:AssumeRole"
     }]
   })
-
 }
 
+# Permiso mínimo: permitir StartAutomationExecution solo sobre nuestros documentos
 resource "aws_iam_role_policy" "eventbridge_ssm_policy" {
   name = "${var.name_prefix}-eventbridge-ssm-policy"
   role = aws_iam_role.eventbridge_role_assume.id
@@ -46,4 +51,3 @@ resource "aws_iam_role_policy" "eventbridge_ssm_policy" {
     ]
   })
 }
-
