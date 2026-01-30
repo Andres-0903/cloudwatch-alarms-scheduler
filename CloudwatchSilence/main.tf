@@ -40,6 +40,10 @@ resource "aws_cloudwatch_event_target" "mute_target" {
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
+
+  input = jsonencode({
+    AutomationAssumeRole = aws_iam_role.ssm_automation_role.arn
+  })
 }
 
 resource "aws_cloudwatch_event_target" "unmute_target" {
@@ -48,4 +52,8 @@ resource "aws_cloudwatch_event_target" "unmute_target" {
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
+
+  input = jsonencode({
+    AutomationAssumeRole = aws_iam_role.ssm_automation_role.arn
+  })
 }
