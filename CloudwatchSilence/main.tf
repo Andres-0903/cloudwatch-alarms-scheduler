@@ -69,15 +69,30 @@ resource "aws_ssm_document" "mute_alarms" {
 
   content = jsonencode({
     schemaVersion = "0.3"
-    mainSteps = [{
-      name   = "DisableAlarms"
-      action = "aws:executeAwsApi"
-      inputs = {
-        Service    = "CloudWatch"
-        Api        = "DisableAlarmActions"
-        AlarmNames = var.alarm_names
+    description   = "Mute CloudWatch alarms by disabling actions"
+    parameters = {
+      AutomationAssumeRole = {
+        type        = "String"
+        description = "IAM role for Automation to assume"
       }
-    }]
+      AlarmNames = {
+        type        = "StringList"
+        description = "Target CloudWatch alarm names"
+        default     = var.alarm_names
+      }
+    }
+    assumeRole = "{{ AutomationAssumeRole }}"
+    mainSteps = [
+      {
+        name   = "DisableAlarms"
+        action = "aws:executeAwsApi"
+        inputs = {
+          Service    = "CloudWatch"
+          Api        = "DisableAlarmActions"
+          AlarmNames = "{{ AlarmNames }}"
+        }
+      }
+    ]
   })
 }
 
@@ -87,15 +102,30 @@ resource "aws_ssm_document" "unmute_alarms" {
 
   content = jsonencode({
     schemaVersion = "0.3"
-    mainSteps = [{
-      name   = "EnableAlarms"
-      action = "aws:executeAwsApi"
-      inputs = {
-        Service    = "CloudWatch"
-        Api        = "EnableAlarmActions"
-        AlarmNames = var.alarm_names
+    description   = "Unmute CloudWatch alarms by enabling actions"
+    parameters = {
+      AutomationAssumeRole = {
+        type        = "String"
+        description = "IAM role for Automation to assume"
       }
-    }]
+      AlarmNames = {
+        type        = "StringList"
+        description = "Target CloudWatch alarm names"
+        default     = var.alarm_names
+      }
+    }
+    assumeRole = "{{ AutomationAssumeRole }}"
+    mainSteps = [
+      {
+        name   = "EnableAlarms"
+        action = "aws:executeAwsApi"
+        inputs = {
+          Service    = "CloudWatch"
+          Api        = "EnableAlarmActions"
+          AlarmNames = "{{ AlarmNames }}"
+        }
+      }
+    ]
   })
 }
 
@@ -108,9 +138,11 @@ resource "aws_cloudwatch_event_target" "mute_target" {
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   input = jsonencode({
-    DocumentName = aws_ssm_document.mute_alarms.name
+    DocumentName    = aws_ssm_document.mute_alarms.name
+    DocumentVersion = "$DEFAULT"
     Parameters = {
       AutomationAssumeRole = [aws_iam_role.ssm_automation_role.arn]
+      AlarmNames           = var.alarm_names
     }
   })
 
@@ -123,11 +155,14 @@ resource "aws_cloudwatch_event_target" "unmute_target" {
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   input = jsonencode({
-    DocumentName = aws_ssm_document.unmute_alarms.name
+    DocumentName    = aws_ssm_document.unmute_alarms.name
+    DocumentVersion = "$DEFAULT"
     Parameters = {
       AutomationAssumeRole = [aws_iam_role.ssm_automation_role.arn]
+      AlarmNames           = var.alarm_names
     }
   })
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
 }
+

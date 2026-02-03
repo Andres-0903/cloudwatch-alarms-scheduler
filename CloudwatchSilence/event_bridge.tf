@@ -39,14 +39,19 @@ resource "aws_iam_role_policy" "eventbridge_ssm_policy" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "StartAutomationExecutionOnlyOnDocs"
         Effect = "Allow"
-        Action = [
-          "ssm:StartAutomationExecution"
-        ]
+        Action = "ssm:StartAutomationExecution"
         Resource = [
           aws_ssm_document.mute_alarms.arn,
           aws_ssm_document.unmute_alarms.arn
         ]
+      },
+      {
+        Sid      = "PassAutomationRole"
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
+        Resource = aws_iam_role.ssm_automation_role.arn
       }
     ]
   })

@@ -30,7 +30,7 @@ variable "unmute_cron"  { type = string }
 
 ```hcl
 module "cloudwatch_alarms_scheduler" {
-  source = "git::https://github.com/Andres-0903/cloudwatch-alarms-scheduler.git//CloudwatchSilence?ref=1.0.4"
+  source = "git::https://github.com/Andres-0903/cloudwatch-alarms-scheduler.git//CloudwatchSilence?ref=1.0.5"
 
   name_prefix = "myapp"
   alarm_names = ["high-cpu-alarm", "http-5xx-errors", "latency-p99"]
