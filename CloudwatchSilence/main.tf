@@ -134,7 +134,7 @@ resource "aws_ssm_document" "unmute_alarms" {
 ############################################
 resource "aws_cloudwatch_event_target" "mute_target" {
   rule     = aws_cloudwatch_event_rule.mute.name
-  arn      = aws_ssm_document.mute_alarms.arn
+  arn      = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:automation-definition/${aws_ssm_document.mute_alarms.name}:$DEFAULT"
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   input = jsonencode({
@@ -151,7 +151,7 @@ resource "aws_cloudwatch_event_target" "mute_target" {
 
 resource "aws_cloudwatch_event_target" "unmute_target" {
   rule     = aws_cloudwatch_event_rule.unmute.name
-  arn      = aws_ssm_document.unmute_alarms.arn
+  arn      = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:automation-definition/${aws_ssm_document.unmute_alarms.name}:$DEFAULT"
   role_arn = aws_iam_role.eventbridge_role_assume.arn
 
   input = jsonencode({
