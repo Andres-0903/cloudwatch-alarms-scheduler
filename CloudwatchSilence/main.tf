@@ -149,6 +149,10 @@ resource "aws_cloudwatch_event_target" "mute_target" {
   })
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Target: unmute
@@ -167,6 +171,10 @@ resource "aws_cloudwatch_event_target" "unmute_target" {
   })
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 
