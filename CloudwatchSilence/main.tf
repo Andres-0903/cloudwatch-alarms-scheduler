@@ -132,6 +132,8 @@ resource "aws_ssm_document" "unmute_alarms" {
 ############################################
 # EventBridge Targets & SSM Automation
 ############################################
+
+# Target: mute
 resource "aws_cloudwatch_event_target" "mute_target" {
   rule     = aws_cloudwatch_event_rule.mute.name
   arn      = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:automation-definition/${aws_ssm_document.mute_alarms.name}:$DEFAULT"
@@ -139,7 +141,7 @@ resource "aws_cloudwatch_event_target" "mute_target" {
 
   input = jsonencode({
     DocumentName    = aws_ssm_document.mute_alarms.name
-    DocumentVersion = "$DEFAULT"
+    DocumentVersion = "$DEFAULT" # opcional, pero consistente
     Parameters = {
       AutomationAssumeRole = [aws_iam_role.ssm_automation_role.arn]
       AlarmNames           = var.alarm_names
@@ -149,6 +151,7 @@ resource "aws_cloudwatch_event_target" "mute_target" {
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
 }
 
+# Target: unmute
 resource "aws_cloudwatch_event_target" "unmute_target" {
   rule     = aws_cloudwatch_event_rule.unmute.name
   arn      = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:automation-definition/${aws_ssm_document.unmute_alarms.name}:$DEFAULT"
@@ -165,4 +168,5 @@ resource "aws_cloudwatch_event_target" "unmute_target" {
 
   depends_on = [aws_iam_role_policy.eventbridge_ssm_policy]
 }
+
 
