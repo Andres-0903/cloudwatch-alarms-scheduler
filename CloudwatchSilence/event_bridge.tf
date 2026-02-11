@@ -1,58 +1,54 @@
 ############################################
-# EventBridge rules + IAM para SSM Automation
+# Reglas de EventBridge (una sola vez c/u)
 ############################################
-
 resource "aws_cloudwatch_event_rule" "mute" {
-  description         = "Rule to mute CloudWatch alarms on schedule"
   name                = "${var.name_prefix}-mute"
+  description         = "Mute CloudWatch alarms on schedule"
   schedule_expression = var.mute_cron
 }
 
 resource "aws_cloudwatch_event_rule" "unmute" {
-  description         = "Rule to unmute CloudWatch alarms on schedule"
   name                = "${var.name_prefix}-unmute"
+  description         = "Unmute CloudWatch alarms on schedule"
   schedule_expression = var.unmute_cron
 }
 
-# Rol que EventBridge asume para invocar SSM Automation
-resource "aws_iam_role" "eventbridge_role_assume" {
-  name = "${var.name_prefix}-eventbridge-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "events.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
+############################################
+# DLQ opcional para ver errores de invocación
+############################################
+resource "aws_sqs_queue" "eventbridge_dlq" {
+  name = "${var.name_prefix}-eventbridge-dlq"
 }
 
-# Permiso mínimo: permitir StartAutomationExecution solo sobre nuestros documentos
-resource "aws_iam_role_policy" "eventbridge_ssm_policy" {
-  name = "${var.name_prefix}-eventbridge-ssm-policy"
-  role = aws_iam_role.eventbridge_role_assume.id
+############################################
+# Targets EventBridge -> Lambda
+############################################
+resource "aws_cloudwatch_event_target" "mute_target" {
+  rule      = aws_cloudwatch_event_rule.mute.name
+  target_id = "mute-lambda-v1"
+  arn       = aws_lambda_function.mute_handler.arn
+  input     = jsonencode({ action = "MUTE" })
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "StartAutomationExecutionOnlyOnDocs"
-        Effect = "Allow"
-        Action = "ssm:StartAutomationExecution"
-        Resource = [
-          aws_ssm_document.mute_alarms.arn,
-          aws_ssm_document.unmute_alarms.arn
-        ]
-      },
-      {
-        Sid      = "PassAutomationRole"
-        Effect   = "Allow"
-        Action   = "iam:PassRole"
-        Resource = aws_iam_role.ssm_automation_role.arn
-      }
-    ]
-  })
+  dead_letter_config {
+    arn = aws_sqs_queue.eventbridge_dlq.arn
+  }
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 2
+  }
+}
+
+resource "aws_cloudwatch_event_target" "unmute_target" {
+  rule      = aws_cloudwatch_event_rule.unmute.name
+  target_id = "unmute-lambda-v1"
+  arn       = aws_lambda_function.mute_handler.arn
+  input     = jsonencode({ action = "UNMUTE" })
+
+  dead_letter_config {
+    arn = aws_sqs_queue.eventbridge_dlq.arn
+  }
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 2
+  }
 }

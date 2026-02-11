@@ -1,36 +1,56 @@
 variable "name_prefix" {
-  description = "Prefix for CloudWatch silence resources"
-  type        = string
-  default     = "cloudwatch-silence"
+  type    = string
+  default = "myapp"
 }
 
-variable "alarm_names" {
-  description = "List of CloudWatch alarm names to mute/unmute"
-  type        = list(string)
-
-  # CloudWatch API: máximo 100 nombres por llamada
-  validation {
-    condition     = length(var.alarm_names) > 0 && length(var.alarm_names) <= 100
-    error_message = "alarm_names must contain 1..100 items (CloudWatch API limit)."
-  }
-}
-
+# Horarios (EventBridge usa UTC)
+# 09:05 Colombia = 14:05 UTC
 variable "mute_cron" {
-  description = "Cron expression to mute CloudWatch alarms (EventBridge)"
-  type        = string
+  type    = string
+  default = "cron(05 14 * * ? *)"
+}
 
+# 09:15 Colombia = 14:15 UTC
+variable "unmute_cron" {
+  type    = string
+  default = "cron(15 14 * * ? *)"
+}
+
+# Filtro de selección para Lambda
+variable "filter_mode" {
+  type    = string
+  default = "TAGS" # TAGS | PREFIX | ALL
   validation {
-    condition     = length(var.mute_cron) > 0
-    error_message = "mute_cron cannot be empty"
+    condition     = contains(["TAGS", "PREFIX", "ALL"], upper(var.filter_mode))
+    error_message = "filter_mode debe ser TAGS, PREFIX o ALL."
   }
 }
 
-variable "unmute_cron" {
-  description = "Cron expression to unmute CloudWatch alarms (EventBridge)"
-  type        = string
+variable "tag_key" {
+  type    = string
+  default = "Mute"
+}
 
+variable "tag_value" {
+  type    = string
+  default = "true"
+}
+
+variable "alarm_prefix" {
+  type    = string
+  default = ""
+}
+
+variable "batch_size" {
+  type    = number
+  default = 100 # <=100 por llamada API
   validation {
-    condition     = length(var.unmute_cron) > 0
-    error_message = "unmute_cron cannot be empty"
+    condition     = var.batch_size >= 1 && var.batch_size <= 100
+    error_message = "batch_size debe estar entre 1 y 100."
   }
+}
+
+variable "regions" {
+  type    = list(string)
+  default = ["us-east-1"]
 }

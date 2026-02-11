@@ -30,14 +30,22 @@ variable "unmute_cron"  { type = string }
 
 ```hcl
 module "cloudwatch_alarms_scheduler" {
-  source = "git::https://github.com/Andres-0903/cloudwatch-alarms-scheduler.git//CloudwatchSilence?ref=1.0.6"
+  source = "git::https://github.com/Andres-0903/cloudwatch-alarms-scheduler.git//CloudwatchSilence?ref=1.0.8"
 
-  name_prefix = "myapp"
-  alarm_names = ["high-cpu-alarm", "http-5xx-errors", "latency-p99"]
+  name_prefix = "Demo_alarms"
 
-  # 00:00→01:00 UTC
-  mute_cron   = "cron(0 0 * * ? *)"
-  unmute_cron = "cron(0 1 * * ? *)"
+  # Colombia -> UTC (ejemplos)
+  mute_cron   = "cron(15 10 * * ? *)" # 05:15 COL = 10:15 UTC
+  unmute_cron = "cron(00 11 * * ? *)" # 06:00 COL = 11:00 UTC
+
+  # Selección de alarmas
+  filter_mode = "TAGS" # o "PREFIX" o "ALL"
+  tag_key     = "Mute"
+  tag_value   = "true"
+  # Si usas prefijo:
+  # alarm_prefix = "ec2-"
+
+  regions = ["us-east-1"]
 }
 ```
 

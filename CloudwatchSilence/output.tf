@@ -8,17 +8,12 @@ output "unmute_rule_name" {
   value       = aws_cloudwatch_event_rule.unmute.name
 }
 
-output "eventbridge_role_arn" {
-  description = "ARN del rol que usa EventBridge para invocar SSM Automation"
-  value       = aws_iam_role.eventbridge_role_assume.arn
+output "lambda_function_name" {
+  description = "Nombre de la Lambda que mutea/desmutea alarmas"
+  value       = aws_lambda_function.mute_handler.function_name
 }
 
-output "ssm_automation_role_arn" {
-  description = "ARN del rol asumido por SSM Automation en la ejecución"
-  value       = aws_iam_role.ssm_automation_role.arn
-}
-
-output "alarm_arns" {
-  description = "ARNs de las alarmas objetivo"
-  value       = local.alarm_arns
+output "eventbridge_dlq_url" {
+  description = "SQS DLQ para EventBridge (si hay fallos de invocación)"
+  value       = aws_sqs_queue.eventbridge_dlq.id
 }
