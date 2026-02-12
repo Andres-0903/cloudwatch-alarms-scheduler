@@ -1,3 +1,11 @@
+
+##Empaqueta automáticamente handler/handler.py → build/lambda_mute.zip
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = "${path.module}/handler/handler.py"
+  output_path = "${path.module}/build/lambda_mute.zip"
+}
+
 resource "aws_lambda_function" "mute_handler" {
   function_name = "${var.name_prefix}-alarms-mute-handler"
   role          = aws_iam_role.lambda_role.arn
