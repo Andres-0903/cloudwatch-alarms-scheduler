@@ -1,5 +1,4 @@
-
-##Empaqueta automáticamente handler/handler.py → build/lambda_mute.zip
+# Empaqueta automáticamente handler/handler.py → build/lambda_mute.zip
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "${path.module}/handler/handler.py"
@@ -9,9 +8,14 @@ data "archive_file" "lambda_zip" {
 resource "aws_lambda_function" "mute_handler" {
   function_name = "${var.name_prefix}-alarms-mute-handler"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "handler.lambda_handler"
-  runtime       = "python3.12"
-  filename      = "lambda_mute.zip" # ZIP que contiene handler.py en la raíz
+
+  # 👇 Módulo.función dentro de handler.py
+  handler = "handler.lambda_handler"
+  runtime = "python3.12"
+
+  # 👇 Usa el ZIP generado por archive_file (¡obligatorio!)
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   timeout     = 600
   memory_size = 256
@@ -28,6 +32,8 @@ resource "aws_lambda_function" "mute_handler" {
     }
   }
 }
+
+
 
 # Permisos para que EventBridge invoque la Lambda
 resource "aws_lambda_permission" "allow_events_mute" {
