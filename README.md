@@ -104,7 +104,7 @@ Silenciar **todas** las alarmas cuyo **nombre** comience por `monitoreo-EC2-DCBO
 
 ```hcl
 module "cloudwatch_alarms_scheduler" {
-  source      = "git::https://github.com/Andres-0903/cloudwatch-alarms-scheduler.git//CloudwatchSilence?ref=2.0.0"
+  source      = "git::https://github.com/Andres-0903/cloudwatch-alarms-scheduler.git//CloudwatchSilence?ref=2.0.1"
 
   name_prefix = "demo_alarms_bog"
 

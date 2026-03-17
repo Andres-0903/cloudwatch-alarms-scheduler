@@ -54,3 +54,9 @@ variable "regions" {
   type    = list(string)
   default = ["us-east-1"]
 }
+
+variable "lambda_version" {
+  description = "version lambda"
+  type        = string
+  default     = "3.14"
+}

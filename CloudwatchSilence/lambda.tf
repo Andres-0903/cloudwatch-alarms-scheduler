@@ -11,7 +11,7 @@ resource "aws_lambda_function" "mute_handler" {
 
   # 👇 Módulo.función dentro de handler.py
   handler = "handler.lambda_handler"
-  runtime = "python3.12"
+  runtime = var.lambda_version
 
   # 👇 Usa el ZIP generado por archive_file (¡obligatorio!)
   filename         = data.archive_file.lambda_zip.output_path
