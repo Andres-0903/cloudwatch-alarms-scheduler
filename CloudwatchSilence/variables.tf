@@ -55,8 +55,8 @@ variable "regions" {
   default = ["us-east-1"]
 }
 
-variable "lambda_version" {
+variable "runtime_version" {
   description = "version lambda"
   type        = string
-  default     = "3.14"
+  default     = "python3.14"
 }
