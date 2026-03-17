@@ -58,5 +58,5 @@ variable "regions" {
 variable "runtime_version" {
   description = "version lambda"
   type        = string
-  default     = "python3.14"
+  default     = "python3.13"
 }
